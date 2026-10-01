@@ -8,6 +8,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src/StacknQueue/Queue" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/StacknQueue/Stack" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/BinarySearch" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/AdversarialSearch" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/Sort/ElementarySort" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
