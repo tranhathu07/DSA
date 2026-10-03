@@ -14,7 +14,12 @@ public class SelectionSort {
             int temp = lst[i];
             lst[i] = lst[mini];
             lst[mini] = temp;
+            for(int j = 0; j<n;j++){
+                System.out.print(lst[j]);
+                if(i==j) System.out.print("|");
 
+            }
+            System.out.println();
         }
     }
     public String toString(int[] lst){
@@ -27,6 +32,6 @@ public class SelectionSort {
     public void main(String[] args){
         int[] in = new int[]{1,5,2,9,8};
         ssort(in);
-        System.out.println(toString(in));
+        //System.out.println(toString(in));
     }
 }
