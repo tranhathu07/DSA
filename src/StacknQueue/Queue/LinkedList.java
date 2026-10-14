@@ -22,6 +22,16 @@ public class LinkedList {
         }
         last.next = new Node(data,null);
     }
+//    //add to the end and return the strart of the new list
+//    public void append(String data){
+//        first = append(first, data);
+//
+//        private Node append(Node node, String data){
+//            if(node == null) return new Node(data);
+//            node.next = append(node.next, data);
+//            return node;
+//        }
+//    }
     public Node findFirst(String data){
         Node temp = top;
         while(temp != null) {
