@@ -12,6 +12,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/Sort/ElementarySort" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/Sort/Sort" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/Recursive" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/Sort/PiorityQueue" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
