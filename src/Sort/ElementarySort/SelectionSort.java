@@ -32,6 +32,6 @@ public class SelectionSort {
     public void main(String[] args){
         int[] in = new int[]{1,5,2,9,8};
         ssort(in);
-        //System.out.println(toString(in));
+//        System.out.println(toString(in));
     }
 }
