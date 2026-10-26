@@ -3,7 +3,7 @@ public class QuickSort {
     public static void randomShuffle(int[] lst){
         Random rnd = new Random();
         for(int i = 1; i<lst.length;i++){
-            int j = rnd.nextInt(0,i);
+            int j = rnd.nextInt(0,i+1);
             int temp = lst[i];
             lst[i] = lst[j];
             lst[j] = temp;
@@ -28,7 +28,7 @@ public class QuickSort {
         int i = lo;
         int j = hi+1;
         while (true) {
-            while (lst[lo] > lst[++i]) {
+            while (lst[++i]<lst[lo] ) {
                 if (i >= hi) {
                     break;
                 }
