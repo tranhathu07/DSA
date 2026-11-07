@@ -1,0 +1,15 @@
+target/
+.venv/
+__pycache__/
+.m2/
+# Local experiments and private planning material
+results/
+data/
+ai-log/
+plan.md
+.idea/
+.vscode/
+*.iml
+.env
+.env.*
+.gemini/
