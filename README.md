@@ -1,159 +1,110 @@
-# MergeSort Cutoff Lab
+# Nghiên cứu Thực nghiệm Ngưỡng CUTOFF cho MergeSort và QuickSort (Cutoff Research Lab)
 
-Dự án Java thực nghiệm tìm ngưỡng CUTOFF phù hợp để mergesort chuyển sang insertion sort trên đoạn nhỏ, sử dụng JMH để đo hiệu năng và Python để thống kê, vẽ biểu đồ.
+> **Môn học**: Cấu trúc Dữ liệu và Giải thuật (DSA Project) — Đại học Công nghệ (VNU-UET)  
+> **Nền tảng**: OpenJDK 21 LTS, JMH 1.37, Python 3 (Matplotlib, Pandas)  
+> **Báo cáo đầy đủ**: [report/BAO_CAO.md](report/BAO_CAO.md)
 
-## Lưu ý trước khi chạy
+---
 
-`src/main/java/study/sort/MergeSort.java` hiện còn TODO. Cần hoàn thiện thuật toán và vượt qua kiểm thử ở bước 2 trước khi chạy benchmark.
+## 📌 Tổng quan Dự án
 
-## 1. Chuẩn bị môi trường
+Dự án thực nghiệm nghiên cứu và xác định ngưỡng **CUTOFF** tối ưu để chuyển từ giải thuật chia để trị (**MergeSort** và **QuickSort**) sang thuật toán sắp xếp chèn sơ cấp (**Insertion Sort**) trên các đoạn con nhỏ, dựa trên lý thuyết kinh điển của Robert Sedgewick & Kevin Wayne (*Algorithms, 4th Edition*).
 
-Cần JDK 17 trở lên, Maven 3.9, PowerShell và Python 3.10 trở lên nếu dùng script phân tích. Giữ nguyên JDK trong toàn bộ đợt đo.
+### Kết quả Cốt lõi
+* **Dữ liệu ngẫu nhiên (Random)**: Ngưỡng tối ưu thực nghiệm tập trung tại **$\text{CUTOFF} = 4 - 10$** (chính xác nhất tại $c = 9$ cho QuickSort và $c = 5 - 10$ cho MergeSort), giúp cải thiện tốc độ từ **$+5\%$ đến $+12.9\%$** so với thuật toán gốc ($c = 0$). Vượt quá $c = 16$, chi phí $O(k^2)$ của Insertion Sort bắt đầu kéo chậm thuật toán.
+* **Dữ liệu gần tăng dần (Nearly Sorted) & Tăng dần (Ascending)**: MergeSort hưởng lợi vượt trội ở cutoff lớn ($c = 32, 64$), tăng tốc lên tới **$+26.5\%$ đến $+44.6\%$** do Insertion Sort đạt tiệm cận tuyến tính $O(k)$ và triệt tiêu chi phí đệ quy / mảng phụ.
+* **Dữ liệu giảm dần (Descending)**: Cảnh báo trường hợp xấu nhất, cutoff lớn ($c = 64$) làm chậm thuật toán tới **$137\%$** do số nghịch thế cực đại.
+* **Khuyến nghị thực tiễn**: Đặt **$\text{CUTOFF} = 8 - 10$** khi chưa biết trước phân bố dữ liệu.
 
-Mở PowerShell tại thư mục gốc dự án và kiểm tra:
+---
 
-```powershell
-java -version
-mvn -version
+## 📁 Cấu trúc Thư mục
+
+```text
+sort-cutoff-research/
+├── configs/
+│   └── grid.properties          # Cấu hình đo lưới chính (cutoffs, warmup, forks)
+├── data/
+│   └── manifest.csv             # Danh mục 51 dataset nhị phân chuẩn hóa kèm SHA-256
+├── report/
+│   ├── BAO_CAO.md               # Bản báo cáo khoa học thực nghiệm toàn diện
+│   ├── outline.md               # Khung đề cương báo cáo gốc
+│   └── images/                  # 32 biểu đồ phân tích thực nghiệm Mean ± SD (PNG)
+├── scripts/
+│   ├── build.ps1                # Script build và kiểm thử tự động
+│   ├── pilot.ps1                # Script chạy thử nghiệm Pilot chọn Warm-up
+│   └── analyze.py               # Script Python tổng hợp CSV và xuất biểu đồ
+├── src/
+│   ├── main/java/study/sort/    # Thuật toán MergeSort & QuickSort hoàn chỉnh
+│   ├── main/java/study/data/    # Generator sinh 51 bộ dữ liệu chuẩn hóa
+│   └── jmh/java/study/          # SortBenchmark & GridLauncher (hỗ trợ Resume)
+├── pom.xml                      # Cấu hình Maven & JMH shaded jar
+└── README.md                    # Hướng dẫn dự án
 ```
 
-Nếu Java chưa có trên PATH, đặt `JAVA_HOME` trỏ tới thư mục JDK đã cài và thêm thư mục `bin` của JDK vào PATH. Các lệnh tiếp theo chạy tại thư mục gốc dự án.
+---
 
-## 2. Build và kiểm thử
+## 🚀 Hướng dẫn Cài đặt và Tái lập Thí nghiệm
 
-```powershell
-./scripts/build.ps1
-```
+### 1. Chuẩn bị Môi trường
+* **JDK 21 LTS** (khuyên dùng Temurin 21): `java -version`
+* **Maven 3.9+**: `mvn -version`
+* **Python 3.10+**: `python --version`
 
-Script tải dependency vào `.m2` trong dự án, chạy `clean package` với profile `benchmark`, tạo `target/benchmarks.jar` và kiểm tra JMH nhận diện `study.SortBenchmark.sort`.
-
-Khi thuật toán còn TODO, test in `SCAFFOLD ONLY` và cho phép build khung. Thành công này chưa xác nhận tính đúng của thuật toán.
-
-Hoàn thiện cài đặt trong `MergeSort.java`, giữ API:
-
-```java
-public static void sort(Comparable[] a, int cutoff)
-```
-
-Quy ước: cutoff 0 là mergesort gốc; cutoff dương tính theo số phần tử của đoạn; cutoff âm bị từ chối bằng `IllegalArgumentException`. Thuật toán hỗ trợ mảng rỗng, giữ tính ổn định và cấp phát một mảng phụ mỗi lần sort công khai trên mảng không tầm thường. Giữ các lựa chọn thuật toán khác theo bài giảng.
-
-Trước khi đo, bắt buộc chạy:
-
-```powershell
-./scripts/build.ps1 -RequireImplementation
-```
-
-Lệnh này thất bại nếu còn TODO. Benchmark cũng từ chối chạy placeholder.
-
-## 3. Sinh bộ dữ liệu
-
-```powershell
-java -cp target/benchmarks.jar study.data.GenerateData
-```
-
-Generator tạo 51 datasets: ba kích thước 10.000, 100.000, 1.000.000; ba phân bố ngẫu nhiên/gần tăng dần/nhiều giá trị trùng với 5 seed; hai phân bố tăng dần/giảm dần với một dataset xác định ở mỗi kích thước.
-
-Duplicates dùng `1_000_000 + nextInt(16)` và kiểm tra offset không bị cache trên JVM đang dùng. `data/manifest.csv` lưu dataset-id, kích thước, phân bố, seed và SHA-256. File nhị phân chứa một int32 big-endian biểu diễn độ dài, tiếp theo N giá trị int32.
-
-Chạy lại generator sẽ ghi đè file cùng tên. Lưu bộ dữ liệu và manifest của đợt nghiên cứu trước khi sửa generator.
-
-## 4. Chạy pilot để chọn warm-up
-
-Chỉ chạy sau khi thuật toán hoàn chỉnh và kiểm thử bắt buộc đạt:
-
-```powershell
-./scripts/pilot.ps1 -Warmup 20 -Measurements 10 -Forks 3
-```
-
-| Tham số | Ý nghĩa | Mặc định |
-|---|---|---|
-| Warmup | Số lần chạy làm nóng mỗi JVM, không tính vào kết quả đo | 20 |
-| Measurements | Số lần đo chính mỗi JVM | 10 |
-| Forks | Số JVM độc lập mỗi cấu hình | 3 |
-
-Lệnh `./scripts/pilot.ps1 -Warmup 20` tương đương lệnh đầy đủ vì hai tham số cuối đã có mặc định.
-
-Mỗi pilot thử 4 datasets × 5 CUTOFF × 3 forks = 60 JVM đo. Script tự build và kiểm thử trước khi chạy. Giữ chế độ nguồn cố định, cắm sạc và hạn chế tác vụ nền; không chạy nhiều benchmark cùng lúc.
-
-Mỗi lượt tạo thư mục `results/pilot-<thời gian>`:
-
-| File | Nội dung |
-|---|---|
-| console.log | Thời gian từng vòng warm-up, measurement và thông tin JMH |
-| jmh.json | Số liệu measurement gốc |
-| environment.txt | Phiên bản Java |
-| version-stdout.txt | Stdout của lệnh lấy phiên bản; có thể rỗng |
-
-Trong log, `ns/op` là nano giây mỗi lần sort; 1.000.000 ns/op bằng 1 ms/lần sort.
-
-Xem các vòng cuối warm-up, xu hướng trong measurement và mean từng fork. Nếu chưa ổn định, thử thêm warm-up 50 rồi 100, chờ từng lượt kết thúc:
-
-```powershell
-./scripts/pilot.ps1 -Warmup 50 -Measurements 10 -Forks 3
-./scripts/pilot.ps1 -Warmup 100 -Measurements 10 -Forks 3
-```
-
-Không mặc định 100 vòng bảo đảm JIT ổn định. Nếu các fork vẫn chênh nhiều lần, cần xem compilation, GC và tải máy trước khi chạy chính. Không chọn CUTOFF từ một phép đo nhanh nhất và không gộp pilot vào kết quả chính.
-
-JMH dùng SingleShotTime: mỗi iteration đo một lần sort. Dataset được đọc và boxing ở trial setup, clone ở iteration setup; kiểm tra kết quả sau đo. Chi phí cấp phát mảng phụ trong hàm sort nằm trong thời gian đo.
-
-## 5. Chạy lưới chính
-
-Sau khi pilot đủ ổn định và có dự toán thời gian phù hợp, sửa `configs/grid.properties`. Ví dụ dưới đây chỉ minh họa, không khẳng định warm-up 50 đã đủ:
-
-```properties
-cutoffs=0,1,2,3,4,5,6,7,8,9,10,12,15,20,24,32,48,64
-warmup=50
-measurements=10
-forks=3
-orderSeed=20261103
-```
-
-Chạy:
-
-```powershell
-./scripts/build.ps1 -RequireImplementation
-java -cp target/benchmarks.jar study.GridLauncher
-```
-
-Launcher đảo thứ tự cặp dataset/CUTOFF theo seed, giữ JVM fork riêng từng cấu hình và lưu lịch chạy, cấu hình, thuộc tính JVM, JSON JMH cùng CSV thô.
-
-Ma trận đầy đủ có 918 cấu hình, tương ứng 2.754 JVM đo với 3 forks. Ước lượng thời gian từ pilot trước khi chạy. Launcher chưa hỗ trợ tự tiếp tục lượt bị gián đoạn; xác định dữ liệu thiếu trước khi phân tích.
-
-## 6. Thống kê và vẽ biểu đồ
-
-Tạo môi trường Python và cài thư viện:
-
+Cài đặt thư viện phân tích:
 ```powershell
 python -m venv .venv
 ./.venv/Scripts/python.exe -m pip install -r requirements.txt
 ```
 
-Nếu lệnh `python` không hoạt động, dùng `py -3` hoặc đường dẫn đầy đủ tới Python đã cài. Thay `TEN-THU-MUC` bằng lượt chạy thực tế:
-
+### 2. Build Dự án và Kiểm thử Thuật toán
+Dự án yêu cầu thuật toán phải hoàn thiện và vượt qua kiểm thử tính đúng trước khi đo:
 ```powershell
-./.venv/Scripts/python.exe scripts/analyze.py results/TEN-THU-MUC --output results/analysis-TEN-THU-MUC
+./scripts/build.ps1 -RequireImplementation
 ```
 
-Thư mục đầu vào chỉ chứa JSON JMH của đợt muốn phân tích. Script xuất `raw.csv`, `datasets.csv`, `summary.csv` và biểu đồ đường PNG với error bars Mean ± SD.
+### 3. Sinh Bộ Dữ liệu (51 Datasets)
+Sinh dữ liệu nhị phân chuẩn hóa cho 3 kích thước ($10\text{k}, 100\text{k}, 1\text{M}$) và 5 kiểu phân bố:
+```powershell
+java -cp target/benchmarks.jar study.data.GenerateData
+```
 
-Script tổng hợp iteration trong mỗi fork, rồi fork means trong mỗi dataset. Với nhiều seed, SD biểu đồ mô tả biến thiên giữa dataset means; với dataset xác định, SD mô tả biến thiên giữa fork means. Mean ± SD không phải khoảng tin cậy hoặc bằng chứng tự động về ý nghĩa thống kê.
+### 4. Chạy Thử nghiệm Pilot (Chọn Warm-up)
+Thử nghiệm trên 4 dataset tiêu biểu để kiểm tra độ ổn định của JIT C2:
+```powershell
+./scripts/pilot.ps1 -Warmup 50 -Measurements 10 -Forks 3
+```
+*(Kết quả pilot cho thấy `Warmup = 50` giúp độ lệch chuẩn tương đối giảm từ $35\%$ xuống dưới $5\%$)*.
 
-Bạn có thể mở CSV bằng Excel để kiểm tra và vẽ bổ sung. Giữ JSON gốc và log, không sửa tay số liệu đo.
+### 5. Chạy Lưới Đo Chính (Grid Launcher)
+Cấu hình tham số trong `configs/grid.properties`, sau đó chạy:
+```powershell
+java -cp target/benchmarks.jar study.GridLauncher 2>&1 | Tee-Object "results/grid-run.log"
+```
 
-## 7. Lưu trữ kết quả
+#### Tính năng Resume (Chạy tiếp khi bị gián đoạn):
+Nếu quá trình đo bị dừng giữa chừng (ví dụ tắt máy hoặc bận việc), bạn có thể chạy tiếp mà không bị mất dữ liệu đã đo:
+```powershell
+java -cp target/benchmarks.jar study.GridLauncher results/grid-<timestamp>
+```
+Chương trình sẽ tự động phát hiện và bỏ qua các cấu hình đã đo xong, chỉ thực hiện các cấu hình còn thiếu.
 
-Dữ liệu sinh nằm trong `data/`, kết quả chạy nằm trong `results/`. Các thư mục này cùng `target/`, `.m2/` và `.venv/` được loại khỏi Git. Khi chuyển dự án sang máy khác, có thể sinh lại dữ liệu và chạy lại thí nghiệm theo các bước trên.
+### 6. Phân tích Dữ liệu và Xuất Biểu đồ
+Tổng hợp kết quả đo thô thành các file CSV (`raw.csv`, `datasets.csv`, `summary.csv`) và vẽ biểu đồ đường $\text{Mean} \pm \text{SD}$:
+```powershell
+python scripts/analyze.py results/grid-<timestamp> --output results/analysis-grid
+```
 
-Để lưu một đợt thí nghiệm, giữ bộ dữ liệu và manifest, cấu hình chạy, phiên bản mã nguồn, JSON gốc, log và kết quả phân tích tương ứng. Có thể dùng `report/outline.md` làm dàn ý báo cáo.
+---
 
-## 8. Xử lý lỗi thường gặp
+## 📊 Báo cáo và Số liệu Nghiên cứu
 
-| Hiện tượng | Cách xử lý |
-|---|---|
-| SCAFFOLD ONLY | Thuật toán còn TODO; chỉ kiểm tra được build khung |
-| MergeSort is still TODO | Chế độ bắt buộc đã chặn placeholder đúng dự kiến |
-| Thiếu /META-INF/BenchmarkList | Chạy build.ps1 để clean build với profile benchmark và annotation processor JMH |
-| Java version ghi ra stderr | Bình thường; script hiện tại thu thông tin bằng tiến trình riêng |
-| py -3 không tìm thấy Python | Dùng đường dẫn Python đầy đủ như mục 6 |
-| Pilot failed | Mở console.log tương ứng và tìm lỗi gốc trước dòng tổng kết |
+Chi tiết toàn bộ bảng số liệu đo đạc, phân tích độ phức tạp, biểu đồ minh họa và thảo luận chuyên sâu có tại:
+👉 **[Xem Báo cáo Chi tiết (report/BAO_CAO.md)](report/BAO_CAO.md)**
+
+---
+
+## 👥 Tác giả & Giấy phép
+* **Sinh viên thực hiện**: Hà Thu (VNU-UET)
+* **Công cụ hỗ trợ**: Google Antigravity (Advanced Agentic AI)
+* **Giấy phép**: Phục vụ mục đích học tập và nghiên cứu môn Cấu trúc Dữ liệu & Giải thuật.
