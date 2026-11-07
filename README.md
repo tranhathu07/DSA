@@ -2,7 +2,8 @@
 
 > **Môn học**: Cấu trúc Dữ liệu và Giải thuật (DSA Project) — Đại học Công nghệ (VNU-UET)  
 > **Nền tảng**: OpenJDK 21 LTS, JMH 1.37, Python 3 (Matplotlib, Pandas)  
-> **Báo cáo đầy đủ**: [report/BAO_CAO.md](report/BAO_CAO.md)
+> **Báo cáo đầy đủ**: [report/BAO_CAO.md](report/BAO_CAO.md)  
+> **Báo cáo đầy đủ**:https://drive.google.com/file/d/13FA73IB-Zb7_GNrLCbrWXDwBqEkM8CGA/view?usp=sharing
 
 ---
 
